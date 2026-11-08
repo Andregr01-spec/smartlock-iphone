@@ -1,0 +1,36 @@
+name: Build iPhone IPA (SMART KEYLESS 2FA)
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build_ios_ipa:
+    name: Build File IPA iPhone
+    runs-on: macos-latest
+    steps:
+      - name: Ambil Kode dari Repository
+        uses: actions/checkout@v4
+
+      - name: Siapkan Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Buat File IPA iPhone
+        run: |
+          PUBSPEC_PATH=$(find . -name "pubspec.yaml" | head -n 1)
+          PROJECT_DIR=$(dirname "$PUBSPEC_PATH")
+          cd "$PROJECT_DIR"
+          flutter create . --platforms=ios
+          flutter pub get
+          flutter build ios --release --no-codesign
+          mkdir -p Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/
+          zip -r -y "$GITHUB_WORKSPACE/SmartKeyless_2FA_iPhone.ipa" Payload
+
+      - name: Simpan File SmartKeyless_2FA_iPhone.ipa
+        uses: actions/upload-artifact@v4
+        with:
+          name: SmartKeyless_2FA_iPhone_IPA
+          path: SmartKeyless_2FA_iPhone.ipa
